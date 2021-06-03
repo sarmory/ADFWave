@@ -11,7 +11,7 @@ This breaks the model, you can't just use a control table as the process will fa
 
 You could just sequence the control table into an order that would work and go through each task in sequence, that would work. Problem here is that you would never carry out any tasks in parallel. Which could severely slow down your process.
 
-So... what to do.
+So... what to do?
 
 After scratching my head for a bit, I came up with an approach that I'm calling "Wave Dependency Loading". It's probably been done before in other technologies. It's rare to come up with something truly new.
 
@@ -27,14 +27,15 @@ Working through the example, I found that 5 iterations (Waves) would be required
 
 ![image](https://user-images.githubusercontent.com/18702185/120649010-2fac3f00-c474-11eb-8c0f-20f5c4ed8ff7.png)
 
+<table><tr><td>
 Okay, you could just leave it at that and create 5 pipelines. The challenge unfortunately is how to handle hundreds of these dependencies!
 
-So the next step is how to capture the details of the tasks and map their dependencies. Working through the example again, I came up with a simple data structure that would support recording this information.
-
-![image](https://user-images.githubusercontent.com/18702185/120649521-c37e0b00-c474-11eb-893a-83a23a7e40b4.png)
+So the next step is how to capture the details of the tasks and map their dependencies. Working through the example again, I came up with a simple data structure that would support recording this information.</td>
+<td>
+<img src="https://user-images.githubusercontent.com/18702185/120649521-c37e0b00-c474-11eb-893a-83a23a7e40b4.png"></td></tr></table>
 
 Scratching out a couple of quick and dirty table definitions.
-
+```
 CREATE TABLE [dbo].[tblTask](
 	[TaskId] [bigint] IDENTITY(1,1) NOT NULL,
 	[TaskName] [nvarchar](50) NULL,
@@ -47,14 +48,18 @@ CREATE TABLE [dbo].[tblTask](
 	[TaskId] [bigint] NULL,
 	[TaskDependendsOnId] [bigint] NULL
 )
-
+```
 And then loading the data relevant to the example.
 
-(tblTask)
-![image](https://user-images.githubusercontent.com/18702185/120650339-99791880-c475-11eb-9695-95ffe8d8161e.png)
-
-(tblTaskDependency)
-![image](https://user-images.githubusercontent.com/18702185/120650516-c62d3000-c475-11eb-9475-37f57076c10a.png)
+<table> <tr>
+<td>	
+<img src="https://user-images.githubusercontent.com/18702185/120650339-99791880-c475-11eb-9695-95ffe8d8161e.png">
+</td>
+<td>
+<img src="https://user-images.githubusercontent.com/18702185/120650516-c62d3000-c475-11eb-9475-37f57076c10a.png">
+</td>
+</tr>
+</table>
 
 All good so far, we've now at least modelled the problem, next, how to create the Waves.
 
@@ -62,8 +67,7 @@ I had a few goes at this and decided that a Stored Proc would probably work best
 
 It's a bit scruffy, again apologies, this is a first cut.
 
------------------------
-
+```
 CREATE PROCEDURE [dbo].[MakeWaves]
 AS
 BEGIN
@@ -121,8 +125,9 @@ BEGIN
 			HAVING (MIN(ISNULL(TempWave_1.TaskId, 0)) > 0) AND (MIN(ISNULL(TempWave_2.TaskId, 0)) = 0)
 		END
 	END
-
------------------------
+END
+GO
+```
 
 Great, I gave it a run and here's the output.
 
@@ -135,16 +140,27 @@ I've not coded to detect these, I've put a trap in to catch > 99 waves, but this
 
 Onto ADF, finally.
 
-Our TempWave table now has the information required to orchestrate the wave and the tblTask table has the information an what each step should carry out.
+Our TempWave table now has the information required to orchestrate the wave and the tblTask table has the information on what each step should carry out.
 
 My approach is to create 2 ADF Pipelines. 
 
 1-BigBatch
 Loop through each Wave in sequence using a For Each loop calling the RunWave pipeline below.
 ![image](https://user-images.githubusercontent.com/18702185/120654745-e2cb6700-c479-11eb-9408-6874a57d2112.png)
+This pipeline has a variable : StopBatch - Boolean - false (Default)
+You can see three activities in this pipeline.
+Working from left to right:
 
+Stored procedure - BuildWaves - This just calls the Stored Proc defined above to create and populate the TempWave table.
+
+Lookup - GetWaves - This queries the table TempWave for the complete list of waves "SELECT DISTINCT Wave FROM dbo.TempWave ORDER BY Wave"
+
+ForEach - For Each Wave - Loops throught the items produced in the Lookup step. Items: @activity('GetWaves').output.value
+
+   If Condition - StopBatchCondition - Based on the condition: @variables('StopBatch')
+      Within the true section I just have Set variable action which kind of unnecessarily updates the StopBatch variable: @bool(1)
+      Within the false section the next Action is Execute Pipeline "RunWave" with a error workflow to a Set variable action which updates the StopBatch variable: @bool(1)
 
 2-RunWave
 Loop through each task in parallel within the wave.
 ![image](https://user-images.githubusercontent.com/18702185/120654644-cd563d00-c479-11eb-8225-43f34f65d637.png)
-
