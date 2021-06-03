@@ -1,0 +1,13 @@
+{
+    "name": "GenericSQL2",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "AzureSqlDatabase2",
+            "type": "LinkedServiceReference"
+        },
+        "annotations": [],
+        "type": "AzureSqlTable",
+        "schema": []
+    },
+    "type": "Microsoft.Synapse/workspaces/datasets"
+}
