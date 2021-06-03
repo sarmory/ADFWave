@@ -3,7 +3,7 @@ Data Factory / Synapse Pipelines - Using control tables to handle complex copy/t
 
 I recently came across a problem that didn't seem to have a nice fit into an existing standard approach. Though, it's one of the types of tasks that I would have thought was fairly common in ETL / ELT scenarios.
 
-In ADF (Azure Data Factory) it is possible to dynamically copy tables from one place to another, typically using some kind of control table. However this assumes that each table can be considered as complete and ready to go.
+In ADF (Azure Data Factory) it is possible to dynamically copy tables from one place to another, typically using some kind of control table and a Parameterised Dataset. However this assumes that each table can be considered as complete and ready to go.
 
 What if the process contains a number of dependencies, you would likely see this in the transformation stage. What if you've got a few hundred copy/sql tasks that have dependencies on other copy/sql tasks being complete.
 
