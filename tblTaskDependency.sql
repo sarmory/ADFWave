@@ -12,4 +12,18 @@ CREATE TABLE [dbo].[tblTaskDependency](
 ) ON [PRIMARY]
 GO
 
-
+INSERT INTO [dbo].[tblTaskDependency] ([TaskId],[TaskDependendsOnId])
+VALUES (1,	NULL),
+(8,	NULL),
+(2,	1),
+(7,	1),
+(4,	2),
+(5,	4),
+(3,	4),
+(6,	3),
+(6,	5),
+(6,	7),
+(7,	8),
+(5,	8),
+(5,	7)
+GO
