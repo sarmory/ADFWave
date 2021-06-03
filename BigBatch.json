@@ -1,0 +1,156 @@
+{
+    "name": "BigBatch",
+    "properties": {
+        "activities": [
+            {
+                "name": "BuildWaves",
+                "type": "SqlServerStoredProcedure",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "7.00:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "storedProcedureName": "[dbo].[MakeWaves]"
+                },
+                "linkedServiceName": {
+                    "referenceName": "AzureSqlDatabase2",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "GetWaves",
+                "type": "Lookup",
+                "dependsOn": [
+                    {
+                        "activity": "BuildWaves",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "7.00:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "SELECT DISTINCT Wave\nFROM  dbo.TempWave\nORDER BY Wave",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "GenericSQL2",
+                        "type": "DatasetReference"
+                    },
+                    "firstRowOnly": false
+                }
+            },
+            {
+                "name": "For Each Wave",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "GetWaves",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('GetWaves').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "StopBatchCondition",
+                            "type": "IfCondition",
+                            "dependsOn": [],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "expression": {
+                                    "value": "@variables('StopBatch')",
+                                    "type": "Expression"
+                                },
+                                "ifFalseActivities": [
+                                    {
+                                        "name": "RunWave",
+                                        "type": "ExecutePipeline",
+                                        "dependsOn": [],
+                                        "userProperties": [],
+                                        "typeProperties": {
+                                            "pipeline": {
+                                                "referenceName": "RunWave",
+                                                "type": "PipelineReference"
+                                            },
+                                            "waitOnCompletion": true,
+                                            "parameters": {
+                                                "WaveNumber": {
+                                                    "value": "@item().Wave",
+                                                    "type": "Expression"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "name": "Stop Big Batch",
+                                        "type": "SetVariable",
+                                        "dependsOn": [
+                                            {
+                                                "activity": "RunWave",
+                                                "dependencyConditions": [
+                                                    "Failed"
+                                                ]
+                                            }
+                                        ],
+                                        "userProperties": [],
+                                        "typeProperties": {
+                                            "variableName": "StopBatch",
+                                            "value": {
+                                                "value": "@bool(1)",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                ],
+                                "ifTrueActivities": [
+                                    {
+                                        "name": "Stop Big Batch Confirm",
+                                        "type": "SetVariable",
+                                        "dependsOn": [],
+                                        "userProperties": [],
+                                        "typeProperties": {
+                                            "variableName": "StopBatch",
+                                            "value": "@bool(1)"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "variables": {
+            "StopBatch": {
+                "type": "Boolean",
+                "defaultValue": false
+            }
+        },
+        "annotations": [],
+        "lastPublishTime": "2021-06-02T18:38:15Z"
+    },
+    "type": "Microsoft.Synapse/workspaces/pipelines"
+}
