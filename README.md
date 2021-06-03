@@ -126,5 +126,25 @@ BEGIN
 
 Great, I gave it a run and here's the output.
 
-![image](https://user-images.githubusercontent.com/18702185/120652193-6fc0f100-c477-11eb-98bb-d478a4586bdd.png)
+![image](https://user-images.githubusercontent.com/18702185/120653112-4f456680-c478-11eb-9219-7a3b60abf6a5.png)
+
+That seems to work well, I can't guarantee it handles all scenarios, but it seems to work. 
+
+The elephant in the room here is "what about dependency loops?"
+I've not coded to detect these, I've put a trap in to catch > 99 waves, but this isn't good enough. Though there is the germ of an idea on how to detect and report loops as you'll end up with more waves than tasks, which would be a good indicator.
+
+Onto ADF, finally.
+
+Our TempWave table now has the information required to orchestrate the wave and the tblTask table has the information an what each step should carry out.
+
+My approach is to create 2 ADF Pipelines. 
+
+1-BigBatch
+Loop through each Wave in sequence using a For Each loop calling the RunWave pipeline below.
+![image](https://user-images.githubusercontent.com/18702185/120654745-e2cb6700-c479-11eb-9408-6874a57d2112.png)
+
+
+2-RunWave
+Loop through each task in parallel within the wave.
+![image](https://user-images.githubusercontent.com/18702185/120654644-cd563d00-c479-11eb-8225-43f34f65d637.png)
 
