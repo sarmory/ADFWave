@@ -170,16 +170,12 @@ Working from left to right:
 
 Lookup - LookupTasks - This uses a stored procedure to get the required Task information.
 
-ForEach - For Each Wave - Loops throught the items produced in the Lookup step. Items: @activity('GetWaves').output.value
+ForEach - RunTasks - Loops throught the items produced in the Lookup step. Items: @activity('LookupTasks').output.value
 
-   If Condition - StopBatchCondition - Based on the condition: @variables('StopBatch')
-      Within the true section I just have Set variable action which kind of unnecessarily updates the StopBatch variable: @bool(1)
-      Within the false section the next Action is Execute Pipeline "RunWave" with a error workflow to a Set variable action which updates the StopBatch variable: @bool(1)
-
-
+   CopyData - CopyDataDynamic - with a source of @item().TaskSQL and target of @item().TaskTarget
 
 All the resources to repeat this approach are included in this repo, these include:
 SQL Statements to create the Tables, Data and Stored Procedures.
-JSON files to create the two Pipelines and Dataset. You'll need to provide your own Linked Service to your Azure SQL DB.
+JSON files to create the two Pipelines and two Datasets. You'll need to provide your own Linked Service to your Azure SQL DB.
 
 In summary, this is a very rough first attempt at building out a larger solution, it's definately not production ready, feel free to feedback use or contribute.
