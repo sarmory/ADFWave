@@ -1,0 +1,29 @@
+{
+    "name": "DynamicTable",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "AzureSqlDatabase2",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "TargetTable": {
+                "type": "string",
+                "defaultValue": "tblTaskSomeStuff"
+            }
+        },
+        "annotations": [],
+        "type": "AzureSqlTable",
+        "schema": [],
+        "typeProperties": {
+            "schema": {
+                "value": "dbo",
+                "type": "Expression"
+            },
+            "table": {
+                "value": "@dataset().TargetTable",
+                "type": "Expression"
+            }
+        }
+    },
+    "type": "Microsoft.Synapse/workspaces/datasets"
+}
