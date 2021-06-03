@@ -164,3 +164,9 @@ ForEach - For Each Wave - Loops throught the items produced in the Lookup step. 
 2-RunWave
 Loop through each task in parallel within the wave.
 ![image](https://user-images.githubusercontent.com/18702185/120654644-cd563d00-c479-11eb-8225-43f34f65d637.png)
+
+All the resources to repeat this approach are included in this repo, these include:
+SQL Statements to create the Tables, Data and Stored Procedures.
+JSON files to create the two Pipelines and Dataset. You'll need to provide your own Linked Service to your Azure SQL DB.
+
+In summary, this is a very rough first attempt at building out a larger solution, it's definately not production ready, feel free to feedback use or contribute.
