@@ -164,6 +164,19 @@ ForEach - For Each Wave - Loops throught the items produced in the Lookup step. 
 2-RunWave
 Loop through each task in parallel within the wave.
 ![image](https://user-images.githubusercontent.com/18702185/120654644-cd563d00-c479-11eb-8225-43f34f65d637.png)
+This pipeline has a parameter : WaveNumber - Int - 1 (Default)
+You can see two activities in this pipeline.
+Working from left to right:
+
+Lookup - LookupTasks - This uses a stored procedure to get the required Task information.
+
+ForEach - For Each Wave - Loops throught the items produced in the Lookup step. Items: @activity('GetWaves').output.value
+
+   If Condition - StopBatchCondition - Based on the condition: @variables('StopBatch')
+      Within the true section I just have Set variable action which kind of unnecessarily updates the StopBatch variable: @bool(1)
+      Within the false section the next Action is Execute Pipeline "RunWave" with a error workflow to a Set variable action which updates the StopBatch variable: @bool(1)
+
+
 
 All the resources to repeat this approach are included in this repo, these include:
 SQL Statements to create the Tables, Data and Stored Procedures.
