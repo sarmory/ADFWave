@@ -144,35 +144,35 @@ Our TempWave table now has the information required to orchestrate the wave and 
 
 My approach is to create 2 ADF Pipelines. 
 
-1-BigBatch
+## 1-BigBatch
 Loop through each Wave in sequence using a For Each loop calling the RunWave pipeline below.
 ![image](https://user-images.githubusercontent.com/18702185/120654745-e2cb6700-c479-11eb-9408-6874a57d2112.png)
 This pipeline has a variable : StopBatch - Boolean - false (Default)
 You can see three activities in this pipeline.
 Working from left to right:
 
-Stored procedure - BuildWaves - This just calls the Stored Proc defined above to create and populate the TempWave table.
+*Stored procedure* - BuildWaves - This just calls the Stored Proc defined above to create and populate the TempWave table.
 
-Lookup - GetWaves - This queries the table TempWave for the complete list of waves "SELECT DISTINCT Wave FROM dbo.TempWave ORDER BY Wave"
+*Lookup* - GetWaves - This queries the table TempWave for the complete list of waves "SELECT DISTINCT Wave FROM dbo.TempWave ORDER BY Wave"
 
-ForEach - For Each Wave - Loops throught the items produced in the Lookup step. Items: @activity('GetWaves').output.value
+*ForEach* - For Each Wave - Loops throught the items produced in the Lookup step. Items: @activity('GetWaves').output.value
 
-   If Condition - StopBatchCondition - Based on the condition: @variables('StopBatch')
+   *If Condition* - StopBatchCondition - Based on the condition: @variables('StopBatch')
       Within the true section I just have Set variable action which kind of unnecessarily updates the StopBatch variable: @bool(1)
       Within the false section the next Action is Execute Pipeline "RunWave" with a error workflow to a Set variable action which updates the StopBatch variable: @bool(1)
 
-2-RunWave
+## 2-RunWave
 Loop through each task in parallel within the wave.
 ![image](https://user-images.githubusercontent.com/18702185/120654644-cd563d00-c479-11eb-8225-43f34f65d637.png)
 This pipeline has a parameter : WaveNumber - Int - 1 (Default)
 You can see two activities in this pipeline.
 Working from left to right:
 
-Lookup - LookupTasks - This uses a stored procedure to get the required Task information.
+*Lookup* - LookupTasks - This uses a stored procedure to get the required Task information.
 
-ForEach - RunTasks - Loops throught the items produced in the Lookup step. Items: @activity('LookupTasks').output.value
+*ForEach* - RunTasks - Loops throught the items produced in the Lookup step. Items: @activity('LookupTasks').output.value
 
-   CopyData - CopyDataDynamic - with a source of @item().TaskSQL and target of @item().TaskTarget
+   *CopyData* - CopyDataDynamic - with a source of @item().TaskSQL and target of @item().TaskTarget
 
 All the resources to repeat this approach are included in this repo, these include:
 SQL Statements to create the Tables, Data and Stored Procedures.
